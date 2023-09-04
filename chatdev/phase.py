@@ -134,6 +134,50 @@ class Phase(ABC):
                 phase_name) + ", turn " + str(i) + "**\n\n"
 
             # TODO: max_tokens_exceeded errors here
+            # Before sending a message, check token usage
+def check_token_usage(message):
+    token_count = len(tokenizer.encode(message))
+    return token_count <= max_token_limit
+
+for i in range(chat_turn_limit):
+    # ... (previous code)
+
+    if isinstance(assistant_response.msg, ChatMessage):
+        # Check token usage for assistant's response
+        if check_token_usage(assistant_response.msg.content):
+            # Log the second interaction here
+            log_and_print_online(role_play_session.assistant_agent.role_name,
+                                 conversation_meta + "[" + role_play_session.user_agent.system_message.content + "]\n\n" + assistant_response.msg.content)
+            if role_play_session.assistant_agent.info:
+                seminar_conclusion = assistant_response.msg.content
+                break
+            if assistant_response.terminated:
+                break
+        else:
+            # Handle max_tokens_exceeded error (e.g., truncate or split message)
+            # You can add your custom logic here.
+
+    if isinstance(user_response.msg, ChatMessage):
+        # Check token usage for user's response
+        if check_token_usage(user_response.msg.content):
+            # Here is the result of the second interaction, which may be used to start the next chat turn
+            log_and_print_online(role_play_session.user_agent.role_name,
+                                 conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
+            if role_play_session.user_agent.info:
+                seminar_conclusion = user_response.msg.content
+                break
+            if user_response.terminated:
+                break
+        else:
+            # Handle max_tokens_exceeded error (e.g., truncate or split message)
+            # You can add your custom logic here.
+
+    # Continue the chat
+    if chat_turn_limit > 1 and isinstance(user_response.msg, ChatMessage):
+        input_user_msg = user_response.msg
+    else:
+        break
+
             if isinstance(assistant_response.msg, ChatMessage):
                 # we log the second interaction here
                 log_and_print_online(role_play_session.assistant_agent.role_name,
